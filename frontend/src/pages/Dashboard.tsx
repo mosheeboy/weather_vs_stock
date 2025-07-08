@@ -33,6 +33,10 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = async () => {
+    if (!startDate || !endDate) {
+      // Don't fetch data if dates are not set
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -99,6 +103,12 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto">
+      {(!startDate || !endDate) ? (
+        <div className="flex flex-col items-center justify-center py-24">
+          <p className="text-lg text-text-secondary">Please select a date range to view dashboard metrics.</p>
+        </div>
+      ) : (
+      <>
       {/* Header Section */}
       <motion.div
         className="mb-8"
@@ -355,6 +365,8 @@ const Dashboard: React.FC = () => {
           </div>
         )}
       </motion.div>
+      </>
+      )}
     </div>
   );
 };

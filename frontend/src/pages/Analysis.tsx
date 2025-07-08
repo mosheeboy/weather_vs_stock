@@ -96,6 +96,8 @@ const Analysis: React.FC = () => {
     fetchData();
   }, [selectedSymbol, selectedCity, startDate, endDate]);
 
+  const isDateRangeEmpty = !startDate || !endDate;
+
   return (
     <div className="max-w-7xl mx-auto">
       <motion.div
@@ -112,226 +114,233 @@ const Analysis: React.FC = () => {
         </p>
       </motion.div>
 
-      {/* Weather & Stock Summary - moved to top */}
-      <motion.div
-        className="card mb-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-      >
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="h-32 bg-surface-200 rounded animate-pulse"></div>
-            <div className="h-32 bg-surface-200 rounded animate-pulse"></div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Weather Summary */}
-            <div className="space-y-4">
-              <h4 className="text-lg font-medium text-text-primary">Weather Summary</h4>
-              {weatherData.length > 0 ? (
+      {isDateRangeEmpty ? (
+        <div className="flex flex-col items-center justify-center py-24">
+          <p className="text-lg text-text-secondary">Please select a date range to view analysis.</p>
+        </div>
+      ) : (
+        <>
+          {/* Weather & Stock Summary - moved to top */}
+          <motion.div
+            className="card mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="h-32 bg-surface-200 rounded animate-pulse"></div>
+                <div className="h-32 bg-surface-200 rounded animate-pulse"></div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Weather Summary */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-medium text-text-primary">Weather Summary</h4>
+                  {weatherData.length > 0 ? (
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
+                        <span className="text-sm text-text-secondary">Temperature Range</span>
+                        <span className="text-sm font-medium text-text-primary">
+                          {formatTemperature(Math.min(...weatherData.map(w => w.temperature_low)))} - {formatTemperature(Math.max(...weatherData.map(w => w.temperature_high)))}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
+                        <span className="text-sm text-text-secondary">Average Temperature</span>
+                        <span className="text-sm font-medium text-text-primary">
+                          {formatTemperature(weatherData.reduce((sum, w) => sum + w.temperature_avg, 0) / weatherData.length)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
+                        <span className="text-sm text-text-secondary">Total Precipitation</span>
+                        <span className="text-sm font-medium text-text-primary">
+                          {weatherData.reduce((sum, w) => sum + w.precipitation, 0).toFixed(1)}mm
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
+                        <span className="text-sm text-text-secondary">Average Humidity</span>
+                        <span className="text-sm font-medium text-text-primary">
+                          {(weatherData.reduce((sum, w) => sum + w.humidity, 0) / weatherData.length).toFixed(0)}%
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-text-secondary">No weather data available</p>
+                  )}
+                </div>
+
+                {/* Stock Summary */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-medium text-text-primary">Stock Performance</h4>
+                  {stockData.length > 0 ? (
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
+                        <span className="text-sm text-text-secondary">Price Range</span>
+                        <span className="text-sm font-medium text-text-primary">
+                          ${Math.min(...stockData.map(s => s.low_price)).toFixed(2)} - ${Math.max(...stockData.map(s => s.high_price)).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
+                        <span className="text-sm text-text-secondary">Total Change</span>
+                        <span className={`text-sm font-medium ${
+                          (() => {
+                            const firstPrice = stockData[0]?.open_price || 0;
+                            const lastPrice = stockData[stockData.length - 1]?.close_price || 0;
+                            const change = ((lastPrice - firstPrice) / firstPrice) * 100;
+                            return change >= 0 ? 'text-accent-positive' : 'text-accent-negative';
+                          })()
+                        }`}>
+                          {(() => {
+                            const firstPrice = stockData[0]?.open_price || 0;
+                            const lastPrice = stockData[stockData.length - 1]?.close_price || 0;
+                            const change = ((lastPrice - firstPrice) / firstPrice) * 100;
+                            return `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+                          })()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
+                        <span className="text-sm text-text-secondary">Average Volume</span>
+                        <span className="text-sm font-medium text-text-primary">
+                          {(stockData.reduce((sum, s) => sum + s.volume, 0) / stockData.length).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
+                        <span className="text-sm text-text-secondary">Volatility</span>
+                        <span className="text-sm font-medium text-text-primary">
+                          {(() => {
+                            const changes = stockData.map(s => Math.abs(s.percentage_change));
+                            const avgChange = changes.reduce((sum, c) => sum + c, 0) / changes.length;
+                            return `${avgChange.toFixed(2)}%`;
+                          })()}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-text-secondary">No stock data available</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </motion.div>
+
+          {/* Error Display */}
+          {error && (
+            <motion.div
+              className="mb-4 p-4 bg-accent-negative/10 border border-accent-negative/20 rounded-xl text-accent-negative"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <p className="text-sm">Error: {error}</p>
+            </motion.div>
+          )}
+
+          {/* Correlation Charts */}
+          <motion.div
+            className="mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <CorrelationCharts
+              analysis={correlationData?.analysis || null}
+              matrix={correlationData?.matrix || null}
+              loading={loading}
+            />
+          </motion.div>
+
+          {/* Statistical Analysis */}
+          <motion.div
+            className="card"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="h-24 bg-surface-200 rounded animate-pulse"></div>
+                <div className="h-24 bg-surface-200 rounded animate-pulse"></div>
+                <div className="h-24 bg-surface-200 rounded animate-pulse"></div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
-                    <span className="text-sm text-text-secondary">Temperature Range</span>
-                    <span className="text-sm font-medium text-text-primary">
-                      {formatTemperature(Math.min(...weatherData.map(w => w.temperature_low)))} - {formatTemperature(Math.max(...weatherData.map(w => w.temperature_high)))}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
-                    <span className="text-sm text-text-secondary">Average Temperature</span>
-                    <span className="text-sm font-medium text-text-primary">
-                      {formatTemperature(weatherData.reduce((sum, w) => sum + w.temperature_avg, 0) / weatherData.length)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
-                    <span className="text-sm text-text-secondary">Total Precipitation</span>
-                    <span className="text-sm font-medium text-text-primary">
-                      {weatherData.reduce((sum, w) => sum + w.precipitation, 0).toFixed(1)}mm
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
-                    <span className="text-sm text-text-secondary">Average Humidity</span>
-                    <span className="text-sm font-medium text-text-primary">
-                      {(weatherData.reduce((sum, w) => sum + w.humidity, 0) / weatherData.length).toFixed(0)}%
-                    </span>
+                  <h4 className="text-lg font-medium text-text-primary">Temperature Correlation</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
+                      <span className="text-sm text-text-secondary">Correlation</span>
+                      <span className="text-sm font-medium text-text-primary">
+                        {correlationData?.analysis?.temperature_correlation ? (correlationData.analysis.temperature_correlation * 100).toFixed(1) : '0'}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
+                      <span className="text-sm text-text-secondary">P-Value</span>
+                      <span className="text-sm font-medium text-text-primary">
+                        {correlationData?.analysis?.temperature_p_value ? correlationData.analysis.temperature_p_value.toFixed(4) : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
+                      <span className="text-sm text-text-secondary">Strength</span>
+                      <span className="text-sm font-medium text-text-primary">
+                        {correlationData?.analysis?.temperature_strength || 'N/A'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <p className="text-text-secondary">No weather data available</p>
-              )}
-            </div>
 
-            {/* Stock Summary */}
-            <div className="space-y-4">
-              <h4 className="text-lg font-medium text-text-primary">Stock Performance</h4>
-              {stockData.length > 0 ? (
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
-                    <span className="text-sm text-text-secondary">Price Range</span>
-                    <span className="text-sm font-medium text-text-primary">
-                      ${Math.min(...stockData.map(s => s.low_price)).toFixed(2)} - ${Math.max(...stockData.map(s => s.high_price)).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
-                    <span className="text-sm text-text-secondary">Total Change</span>
-                    <span className={`text-sm font-medium ${
-                      (() => {
-                        const firstPrice = stockData[0]?.open_price || 0;
-                        const lastPrice = stockData[stockData.length - 1]?.close_price || 0;
-                        const change = ((lastPrice - firstPrice) / firstPrice) * 100;
-                        return change >= 0 ? 'text-accent-positive' : 'text-accent-negative';
-                      })()
-                    }`}>
-                      {(() => {
-                        const firstPrice = stockData[0]?.open_price || 0;
-                        const lastPrice = stockData[stockData.length - 1]?.close_price || 0;
-                        const change = ((lastPrice - firstPrice) / firstPrice) * 100;
-                        return `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
-                      })()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
-                    <span className="text-sm text-text-secondary">Average Volume</span>
-                    <span className="text-sm font-medium text-text-primary">
-                      {(stockData.reduce((sum, s) => sum + s.volume, 0) / stockData.length).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
-                    <span className="text-sm text-text-secondary">Volatility</span>
-                    <span className="text-sm font-medium text-text-primary">
-                      {(() => {
-                        const changes = stockData.map(s => Math.abs(s.percentage_change));
-                        const avgChange = changes.reduce((sum, c) => sum + c, 0) / changes.length;
-                        return `${avgChange.toFixed(2)}%`;
-                      })()}
-                    </span>
+                  <h4 className="text-lg font-medium text-text-primary">Precipitation Correlation</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
+                      <span className="text-sm text-text-secondary">Correlation</span>
+                      <span className="text-sm font-medium text-text-primary">
+                        {correlationData?.analysis?.precipitation_correlation ? (correlationData.analysis.precipitation_correlation * 100).toFixed(1) : '0'}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
+                      <span className="text-sm text-text-secondary">P-Value</span>
+                      <span className="text-sm font-medium text-text-primary">
+                        {correlationData?.analysis?.precipitation_p_value ? correlationData.analysis.precipitation_p_value.toFixed(4) : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
+                      <span className="text-sm text-text-secondary">Strength</span>
+                      <span className="text-sm font-medium text-text-primary">
+                        {correlationData?.analysis?.precipitation_strength || 'N/A'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <p className="text-text-secondary">No stock data available</p>
-              )}
-            </div>
-          </div>
-        )}
-      </motion.div>
 
-      {/* Error Display */}
-      {error && (
-        <motion.div
-          className="mb-4 p-4 bg-accent-negative/10 border border-accent-negative/20 rounded-xl text-accent-negative"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <p className="text-sm">Error: {error}</p>
-        </motion.div>
+                <div className="space-y-3">
+                  <h4 className="text-lg font-medium text-text-primary">Overall Analysis</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
+                      <span className="text-sm text-text-secondary">Overall Correlation</span>
+                      <span className="text-sm font-medium text-text-primary">
+                        {correlationData?.analysis?.overall_correlation ? (correlationData.analysis.overall_correlation * 100).toFixed(1) : '0'}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
+                      <span className="text-sm text-text-secondary">Confidence Interval</span>
+                      <span className="text-sm font-medium text-text-primary">
+                        {correlationData?.analysis?.confidence_interval ? 
+                          `${(correlationData.analysis.confidence_interval[0] * 100).toFixed(1)}% - ${(correlationData.analysis.confidence_interval[1] * 100).toFixed(1)}%` : 
+                          'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
+                      <span className="text-sm text-text-secondary">Sample Size</span>
+                      <span className="text-sm font-medium text-text-primary">
+                        {correlationData?.analysis?.sample_size || '0'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        </>
       )}
-
-      {/* Correlation Charts */}
-      <motion.div
-        className="mb-12"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-      >
-        <CorrelationCharts
-          analysis={correlationData?.analysis || null}
-          matrix={correlationData?.matrix || null}
-          loading={loading}
-        />
-      </motion.div>
-
-      {/* Statistical Analysis */}
-      <motion.div
-        className="card"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-      >
-        
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="h-24 bg-surface-200 rounded animate-pulse"></div>
-            <div className="h-24 bg-surface-200 rounded animate-pulse"></div>
-            <div className="h-24 bg-surface-200 rounded animate-pulse"></div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-3">
-              <h4 className="text-lg font-medium text-text-primary">Temperature Correlation</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
-                  <span className="text-sm text-text-secondary">Correlation</span>
-                  <span className="text-sm font-medium text-text-primary">
-                    {correlationData?.analysis?.temperature_correlation ? (correlationData.analysis.temperature_correlation * 100).toFixed(1) : '0'}%
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
-                  <span className="text-sm text-text-secondary">P-Value</span>
-                  <span className="text-sm font-medium text-text-primary">
-                    {correlationData?.analysis?.temperature_p_value ? correlationData.analysis.temperature_p_value.toFixed(4) : 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
-                  <span className="text-sm text-text-secondary">Strength</span>
-                  <span className="text-sm font-medium text-text-primary">
-                    {correlationData?.analysis?.temperature_strength || 'N/A'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="text-lg font-medium text-text-primary">Precipitation Correlation</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
-                  <span className="text-sm text-text-secondary">Correlation</span>
-                  <span className="text-sm font-medium text-text-primary">
-                    {correlationData?.analysis?.precipitation_correlation ? (correlationData.analysis.precipitation_correlation * 100).toFixed(1) : '0'}%
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
-                  <span className="text-sm text-text-secondary">P-Value</span>
-                  <span className="text-sm font-medium text-text-primary">
-                    {correlationData?.analysis?.precipitation_p_value ? correlationData.analysis.precipitation_p_value.toFixed(4) : 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
-                  <span className="text-sm text-text-secondary">Strength</span>
-                  <span className="text-sm font-medium text-text-primary">
-                    {correlationData?.analysis?.precipitation_strength || 'N/A'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="text-lg font-medium text-text-primary">Overall Analysis</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
-                  <span className="text-sm text-text-secondary">Overall Correlation</span>
-                  <span className="text-sm font-medium text-text-primary">
-                    {correlationData?.analysis?.overall_correlation ? (correlationData.analysis.overall_correlation * 100).toFixed(1) : '0'}%
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
-                  <span className="text-sm text-text-secondary">Confidence Interval</span>
-                  <span className="text-sm font-medium text-text-primary">
-                    {correlationData?.analysis?.confidence_interval ? 
-                      `${(correlationData.analysis.confidence_interval[0] * 100).toFixed(1)}% - ${(correlationData.analysis.confidence_interval[1] * 100).toFixed(1)}%` : 
-                      'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
-                  <span className="text-sm text-text-secondary">Sample Size</span>
-                  <span className="text-sm font-medium text-text-primary">
-                    {correlationData?.analysis?.sample_size || '0'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </motion.div>
     </div>
   );
 };
