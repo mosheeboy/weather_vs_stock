@@ -1,0 +1,15 @@
+{
+  "short_name": "Weather vs Stock",
+  "name": "Weather vs Stock Market Correlator",
+  "icons": [
+    {
+      "src": "/Notion-Face-Portrait.ico",
+      "type": "image/x-icon",
+      "sizes": "48x48 64x64 128x128 256x256"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff"
+}

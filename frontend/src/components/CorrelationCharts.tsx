@@ -265,44 +265,7 @@ const CorrelationCharts: React.FC<CorrelationChartsProps> = ({
         </motion.div>
       )}
 
-      {/* Summary Statistics */}
-      <motion.div
-        className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        <div className="card text-center">
-          <h4 className="text-lg font-semibold text-text-primary mb-2">Overall Correlation</h4>
-          <p className="text-3xl font-bold" style={{ color: getCorrelationColor(analysis.overall_correlation) }}>
-            {analysis.overall_correlation.toFixed(3)}
-          </p>
-          <p className="text-sm text-text-secondary mt-1">
-            {Math.abs(analysis.overall_correlation) > 0.5 ? 'Strong' : 
-             Math.abs(analysis.overall_correlation) > 0.3 ? 'Moderate' : 'Weak'} correlation
-          </p>
-        </div>
-        
-        <div className="card text-center">
-          <h4 className="text-lg font-semibold text-text-primary mb-2">R-squared</h4>
-          <p className="text-3xl font-bold text-primary-500">
-            {(analysis.r_squared * 100).toFixed(1)}%
-          </p>
-          <p className="text-sm text-text-secondary mt-1">
-            Variance explained
-          </p>
-        </div>
-        
-        <div className="card text-center">
-          <h4 className="text-lg font-semibold text-text-primary mb-2">Sample Size</h4>
-          <p className="text-3xl font-bold text-primary-500">
-            {analysis.sample_size}
-          </p>
-          <p className="text-sm text-text-secondary mt-1">
-            Data points
-          </p>
-        </div>
-      </motion.div>
+
     </div>
   );
 };
