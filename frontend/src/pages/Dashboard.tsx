@@ -13,8 +13,11 @@ import {
 import { correlationApi, analysisApi, weatherApi, stockApi } from '../utils/api';
 import { CorrelationResponse, AnalysisSummary, WeatherData, StockData } from '../types';
 import { useAppContext } from '../context/AppContext';
+import { formatTemperature } from '../utils/temperature';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const {
     selectedSymbol,
     selectedCity,
@@ -237,7 +240,7 @@ const Dashboard: React.FC = () => {
                       if (!weatherData.length || !stockData.length) return 'No data';
                       const weatherHigh = Math.max(...weatherData.map(w => w.temperature_high));
                       const weatherLow = Math.min(...weatherData.map(w => w.temperature_low));
-                      return `${weatherLow.toFixed(0)}°C - ${weatherHigh.toFixed(0)}°C`;
+                      return `${formatTemperature(weatherLow)} - ${formatTemperature(weatherHigh)}`;
                     })()}
                   </p>
                 </>
@@ -256,7 +259,7 @@ const Dashboard: React.FC = () => {
           className="card-hover cursor-pointer"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => window.location.hash = '#/analysis'}
+          onClick={() => navigate('/analysis')}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.6 }}
@@ -274,7 +277,7 @@ const Dashboard: React.FC = () => {
           className="card-hover cursor-pointer"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => window.location.hash = '#/comparison'}
+          onClick={() => navigate('/comparison')}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.7 }}
@@ -292,7 +295,7 @@ const Dashboard: React.FC = () => {
           className="card-hover cursor-pointer"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => window.location.hash = '#/insights'}
+          onClick={() => navigate('/insights')}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.8 }}

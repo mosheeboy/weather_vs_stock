@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { WeatherData } from '../types';
 
 interface AppContextType {
   selectedSymbol: string;
@@ -9,6 +10,8 @@ interface AppContextType {
   setStartDate: (date: string) => void;
   endDate: string;
   setEndDate: (date: string) => void;
+  weatherData: WeatherData[];
+  setWeatherData: (data: WeatherData[]) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -38,6 +41,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   });
+  const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
 
   const value = {
     selectedSymbol,
@@ -48,6 +52,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setStartDate,
     endDate,
     setEndDate,
+    weatherData,
+    setWeatherData,
   };
 
   return (

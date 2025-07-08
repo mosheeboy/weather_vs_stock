@@ -12,13 +12,19 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const {
     selectedSymbol,
     setSelectedSymbol,
-    selectedCity,
-    setSelectedCity,
     startDate,
     setStartDate,
     endDate,
     setEndDate,
+    selectedCity,
+    weatherData,
   } = useAppContext();
+
+  let high = null, low = null;
+  if (weatherData && weatherData.length > 0) {
+    high = Math.max(...weatherData.map(w => w.temperature_high));
+    low = Math.min(...weatherData.map(w => w.temperature_low));
+  }
 
   const symbols = [
     { value: 'SPY', label: 'SPY' },
@@ -26,10 +32,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     { value: 'VOO', label: 'VOO' },
     { value: 'IVV', label: 'IVV' },
     { value: 'QQQ', label: 'QQQ' },
-  ];
-
-  const cities = [
-    { value: 'NYC', label: 'NYC' },
   ];
 
   return (
@@ -128,6 +130,14 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             <div className="text-xs text-text-secondary">
               {selectedSymbol} • NYC
             </div>
+            {selectedCity && (
+              <span className="text-sm text-text-secondary ml-2">{selectedCity}</span>
+            )}
+            {high !== null && low !== null && (
+              <span className="ml-4 px-3 py-1 rounded bg-surface-200 text-xs font-medium text-text-primary">
+                High: {high}°  Low: {low}°
+              </span>
+            )}
           </div>
         </div>
       </div>

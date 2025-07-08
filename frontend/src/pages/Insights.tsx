@@ -15,6 +15,7 @@ import { correlationApi, analysisApi, weatherApi, stockApi } from '../utils/api'
 import { CorrelationResponse, AnalysisSummary, WeatherData, StockData } from '../types';
 import TimeSeriesChart from '../components/TimeSeriesChart';
 import { useAppContext } from '../context/AppContext';
+import { formatTemperature } from '../utils/temperature';
 
 const Insights: React.FC = () => {
   const {
@@ -153,11 +154,12 @@ const Insights: React.FC = () => {
 
     // Weather extremes
     const tempRange = Math.max(...weatherData.map(w => w.temperature_high)) - Math.min(...weatherData.map(w => w.temperature_low));
+    const tempRangeF = (tempRange * 9/5); // Convert to Fahrenheit
     if (tempRange > 15) {
       insights.push({
         type: 'weather-extreme',
         title: 'Significant Temperature Variation',
-        description: `Temperature range of ${tempRange.toFixed(1)}°C may impact market sentiment`,
+        description: `Temperature range of ${tempRangeF.toFixed(1)}°F may impact market sentiment`,
         icon: 'thermometer',
         severity: 'medium'
       });

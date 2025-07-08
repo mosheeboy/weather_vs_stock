@@ -329,7 +329,17 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 >
                   Cancel
                 </button>
-                                 {tempStartDate && !isSingleDay && (
+                <button
+                  onClick={() => {
+                    onDateRangeChange('', '');
+                    setIsOpen(false);
+                    resetTempDates();
+                  }}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-hover rounded-lg transition-colors"
+                >
+                  Clear Dates
+                </button>
+                {tempStartDate && !isSingleDay && (
                    <button
                      onClick={() => {
                        if (tempStartDate) {

@@ -12,6 +12,7 @@ import { correlationApi, analysisApi, weatherApi, stockApi } from '../utils/api'
 import { CorrelationResponse, AnalysisSummary, WeatherData, StockData } from '../types';
 import CorrelationCharts from '../components/CorrelationCharts';
 import { useAppContext } from '../context/AppContext';
+import { formatTemperature } from '../utils/temperature';
 
 const Analysis: React.FC = () => {
   const {
@@ -19,11 +20,12 @@ const Analysis: React.FC = () => {
     selectedCity,
     startDate,
     endDate,
+    setWeatherData,
   } = useAppContext();
 
   const [correlationData, setCorrelationData] = useState<CorrelationResponse | null>(null);
   const [summaryData, setSummaryData] = useState<AnalysisSummary | null>(null);
-  const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
+  const [weatherData, setLocalWeatherData] = useState<WeatherData[]>([]);
   const [stockData, setStockData] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +55,7 @@ const Analysis: React.FC = () => {
         startDateStr,
         endDateStr
       );
+      setLocalWeatherData(weatherResponse.data || []);
       setWeatherData(weatherResponse.data || []);
       
       // Fetch stock data
@@ -109,39 +112,13 @@ const Analysis: React.FC = () => {
         </p>
       </motion.div>
 
-      {/* Error Display */}
-      {error && (
-        <motion.div
-          className="mb-4 p-4 bg-accent-negative/10 border border-accent-negative/20 rounded-xl text-accent-negative"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <p className="text-sm">Error: {error}</p>
-        </motion.div>
-      )}
-
-      {/* Correlation Charts */}
-      <motion.div
-        className="mb-12"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-      >
-        <CorrelationCharts
-          analysis={correlationData?.analysis || null}
-          matrix={correlationData?.matrix || null}
-          loading={loading}
-        />
-      </motion.div>
-
-      {/* Weather & Stock Summary */}
+      {/* Weather & Stock Summary - moved to top */}
       <motion.div
         className="card mb-8"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
       >
-        
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="h-32 bg-surface-200 rounded animate-pulse"></div>
@@ -157,13 +134,13 @@ const Analysis: React.FC = () => {
                   <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
                     <span className="text-sm text-text-secondary">Temperature Range</span>
                     <span className="text-sm font-medium text-text-primary">
-                      {Math.min(...weatherData.map(w => w.temperature_low)).toFixed(1)}°C - {Math.max(...weatherData.map(w => w.temperature_high)).toFixed(1)}°C
+                      {formatTemperature(Math.min(...weatherData.map(w => w.temperature_low)))} - {formatTemperature(Math.max(...weatherData.map(w => w.temperature_high)))}
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
                     <span className="text-sm text-text-secondary">Average Temperature</span>
                     <span className="text-sm font-medium text-text-primary">
-                      {(weatherData.reduce((sum, w) => sum + w.temperature_avg, 0) / weatherData.length).toFixed(1)}°C
+                      {formatTemperature(weatherData.reduce((sum, w) => sum + w.temperature_avg, 0) / weatherData.length)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-surface-50 rounded-xl">
@@ -236,6 +213,31 @@ const Analysis: React.FC = () => {
             </div>
           </div>
         )}
+      </motion.div>
+
+      {/* Error Display */}
+      {error && (
+        <motion.div
+          className="mb-4 p-4 bg-accent-negative/10 border border-accent-negative/20 rounded-xl text-accent-negative"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <p className="text-sm">Error: {error}</p>
+        </motion.div>
+      )}
+
+      {/* Correlation Charts */}
+      <motion.div
+        className="mb-12"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        <CorrelationCharts
+          analysis={correlationData?.analysis || null}
+          matrix={correlationData?.matrix || null}
+          loading={loading}
+        />
       </motion.div>
 
       {/* Statistical Analysis */}

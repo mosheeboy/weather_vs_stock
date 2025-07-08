@@ -13,6 +13,7 @@ import {
   AreaChart,
 } from 'recharts';
 import { WeatherData, StockData } from '../types';
+import { celsiusToFahrenheit } from '../utils/temperature';
 
 interface TimeSeriesChartProps {
   weatherData: WeatherData[];
@@ -60,7 +61,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     const stock = stockData.find(s => s.date === weather.date);
     return {
       date: weather.date,
-      temperature: weather.temperature_avg,
+      temperature: celsiusToFahrenheit(weather.temperature_avg),
       precipitation: weather.precipitation,
       humidity: weather.humidity,
       stockPrice: stock?.close_price || 0,
@@ -77,7 +78,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
           {payload.map((entry: any, index: number) => (
             <p key={index} className="text-sm text-text-secondary">
               <span style={{ color: entry.color }}>●</span> {entry.name}: {entry.value}
-              {entry.dataKey === 'temperature' && '°C'}
+              {entry.dataKey === 'temperature' && '°F'}
               {entry.dataKey === 'precipitation' && 'mm'}
               {entry.dataKey === 'humidity' && '%'}
               {entry.dataKey === 'stockPrice' && '$'}
@@ -125,7 +126,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
                 tick={{ fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(value) => `${value}°C`}
+                tickFormatter={(value) => `${value}°F`}
               />
               <YAxis 
                 yAxisId="right"
@@ -152,7 +153,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
                 stroke="#FF9500"
                 strokeWidth={2}
                 dot={{ fill: '#FF9500', strokeWidth: 2, r: 3 }}
-                name="Temperature (°C)"
+                name="Temperature (°F)"
               />
               <Line
                 yAxisId="right"
