@@ -92,20 +92,6 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 
   return (
     <div className="space-y-8">
-      {/* Section Header */}
-      <motion.div
-        className="text-center mb-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h2 className="text-2xl font-bold text-text-primary mb-2">
-          Time Series Analysis
-        </h2>
-        <p className="text-text-secondary">
-          Visualize the relationship between weather patterns and stock performance over time
-        </p>
-      </motion.div>
 
       {/* Comprehensive Weather vs Stock Chart */}
       <motion.div

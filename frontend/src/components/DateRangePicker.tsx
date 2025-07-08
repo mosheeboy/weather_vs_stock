@@ -23,6 +23,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   const [tempStartDate, setTempStartDate] = useState<Date | null>(null);
   const [tempEndDate, setTempEndDate] = useState<Date | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -107,55 +108,57 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     return date >= tempStartDate && date <= tempEndDate;
   };
 
+  // Update isDateSelectable to disallow today
   const isDateSelectable = (date: Date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return date <= today;
+    return date < today; // strictly before today
   };
 
   const handleDateClick = (date: Date) => {
     if (!isDateSelectable(date)) return;
+    setErrorMsg(null);
 
     if (selectionMode === 'start') {
       setTempStartDate(date);
-      if (isSingleDay) {
-        // For single day, immediately set both dates
-        setTempEndDate(date);
-        onDateRangeChange(
-          date.toISOString().split('T')[0],
-          date.toISOString().split('T')[0]
-        );
-        setIsOpen(false);
-        resetTempDates();
-      } else {
-        // For range, switch to end date selection
-        setSelectionMode('end');
-      }
+      setTempEndDate(null);
+      setSelectionMode('end');
     } else {
       // End date selection
       if (tempStartDate) {
-        const daysDiff = Math.ceil((date.getTime() - tempStartDate.getTime()) / (1000 * 60 * 60 * 24));
-        
-        if (daysDiff < 0) {
-          // If end date is before start date, swap them
-          setTempEndDate(tempStartDate);
-          setTempStartDate(date);
-        } else if (daysDiff > maxDays - 1) {
-          // If more than maxDays, adjust end date to be exactly maxDays from start
-          const adjustedEndDate = new Date(tempStartDate);
-          adjustedEndDate.setDate(tempStartDate.getDate() + maxDays - 1);
-          setTempEndDate(adjustedEndDate);
-        } else {
+        if (date.toDateString() === tempStartDate.toDateString()) {
+          // If already selected as single day, deselect
+          if (tempEndDate && tempEndDate.toDateString() === date.toDateString()) {
+            setTempStartDate(null);
+            setTempEndDate(null);
+            onDateRangeChange('', ''); // clear parent selection
+            setIsOpen(false);
+            resetTempDates();
+            return;
+          }
+          // Single day selection
           setTempEndDate(date);
+          onDateRangeChange(date.toISOString().split('T')[0], date.toISOString().split('T')[0]);
+          setIsOpen(false);
+          resetTempDates();
+        } else {
+          const daysDiff = Math.ceil((date.getTime() - tempStartDate.getTime()) / (1000 * 60 * 60 * 24));
+          if (daysDiff < 0) {
+            setTempEndDate(tempStartDate);
+            setTempStartDate(date);
+          } else if (daysDiff > maxDays - 1) {
+            setErrorMsg(`Please select a range of ${maxDays} days or less.`);
+            return;
+          } else {
+            setTempEndDate(date);
+          }
+          // Apply the selection
+          const finalStartDate = tempStartDate.toISOString().split('T')[0];
+          const finalEndDate = (date).toISOString().split('T')[0];
+          onDateRangeChange(finalStartDate, finalEndDate);
+          setIsOpen(false);
+          resetTempDates();
         }
-        
-        // Apply the selection
-        const finalStartDate = tempStartDate.toISOString().split('T')[0];
-        const finalEndDate = (tempEndDate || date).toISOString().split('T')[0];
-        
-        onDateRangeChange(finalStartDate, finalEndDate);
-        setIsOpen(false);
-        resetTempDates();
       }
     }
   };
@@ -187,26 +190,19 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     year: 'numeric'
   });
 
-  // Portal modal rendering
-  const modalContent = (
+  // Dropdown calendar content (no overlay, not centered)
+  const dropdownContent = (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[99999] pointer-events-auto"
+          ref={modalRef}
+          className="absolute left-0 mt-2 bg-white rounded-xl shadow-2xl border border-surface-200 p-6 w-80 max-w-[90vw] z-[99999]"
           style={{ pointerEvents: 'auto' }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
         >
-          <motion.div
-            ref={modalRef}
-            className="bg-surface-primary rounded-xl shadow-2xl p-6 w-80 max-w-[90vw] z-[99999] pointer-events-auto"
-            style={{ pointerEvents: 'auto' }}
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          >
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-text-primary">
@@ -244,6 +240,13 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 </button>
               </div>
 
+              {/* Error Message */}
+              {errorMsg && (
+                <div className="mb-2 p-2 bg-red-100 text-red-700 rounded text-xs text-center">
+                  {errorMsg}
+                </div>
+              )}
+
               {/* Selection Mode Indicator */}
               {!isSingleDay && (
                 <div className="mb-3 p-2 bg-accent-primary/10 rounded-lg">
@@ -266,25 +269,48 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 {calendarDays.map((date, index) => (
                   <div key={index} className="text-center">
                     {date ? (
-                      <button
-                        onClick={() => handleDateClick(date)}
-                        disabled={!isDateSelectable(date)}
-                        className={`
-                          w-8 h-8 rounded-lg text-sm font-medium transition-all
-                          ${isDateInRange(date)
-                            ? 'bg-accent-primary text-white'
-                            : isDateSelectable(date)
-                            ? 'hover:bg-surface-hover text-text-primary'
-                            : 'text-text-tertiary cursor-not-allowed'
-                          }
-                          ${date.toDateString() === tempStartDate?.toDateString() && selectionMode === 'end'
-                            ? 'ring-2 ring-accent-primary ring-offset-2'
-                            : ''
-                          }
-                        `}
-                      >
-                        {date.getDate()}
-                      </button>
+                      (() => {
+                        const isRangeStart = tempStartDate && date.toDateString() === tempStartDate.toDateString();
+                        const isRangeEnd = tempEndDate && date.toDateString() === tempEndDate.toDateString();
+                        const isInRange = tempStartDate && tempEndDate && date > tempStartDate && date < tempEndDate;
+                        const isSingleDay = tempStartDate && tempEndDate && tempStartDate.toDateString() === tempEndDate.toDateString();
+                        // Only show highlight if there is a selection
+                        const hasSelection = tempStartDate && tempEndDate;
+                        let rounding = '';
+                        if (hasSelection && isSingleDay && isRangeStart) {
+                          rounding = 'rounded-full';
+                        } else if (hasSelection && !isSingleDay && isRangeStart) {
+                          rounding = 'rounded-l-full';
+                        } else if (hasSelection && !isSingleDay && isRangeEnd) {
+                          rounding = 'rounded-r-full';
+                        } else {
+                          rounding = 'rounded-none';
+                        }
+                        return (
+                          <button
+                            onClick={() => handleDateClick(date)}
+                            disabled={!isDateSelectable(date)}
+                            className={`
+                              w-8 h-8 text-sm transition-all
+                              ${hasSelection && (isRangeStart || isRangeEnd)
+                                ? 'bg-blue-600 text-white font-bold'
+                                : hasSelection && isInRange
+                                ? 'bg-blue-100 text-blue-700'
+                                : isDateSelectable(date)
+                                ? 'text-gray-900 hover:bg-blue-100 hover:text-blue-700'
+                                : 'text-gray-300 cursor-not-allowed bg-transparent'
+                              }
+                              ${rounding}
+                              ${date.toDateString() === tempStartDate?.toDateString() && selectionMode === 'end'
+                                ? 'ring-2 ring-blue-400 ring-offset-2'
+                                : ''
+                              }
+                            `}
+                          >
+                            {date.getDate()}
+                          </button>
+                        );
+                      })()
                     ) : (
                       <div className="w-8 h-8" />
                     )}
@@ -323,24 +349,27 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                    </button>
                  )}
               </div>
-          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
   );
 
   return (
-    <div className="relative">
+    <div className="relative inline-block w-full">
       {/* Trigger Button */}
       <button
-        onClick={() => setIsOpen(true)}
-        className="input-field appearance-none pr-10 text-left cursor-pointer hover:bg-surface-hover transition-colors"
+        onClick={() => {
+          setIsOpen(true);
+          const today = new Date();
+          setCurrentMonth({ year: today.getFullYear(), month: today.getMonth() });
+        }}
+        className="input-field appearance-none pr-10 text-left cursor-pointer hover:bg-surface-hover transition-colors w-full"
       >
         <span className="truncate">{formatDateRange()}</span>
         <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text-secondary" />
       </button>
-      {/* Portal for Modal */}
-      {typeof window !== 'undefined' && ReactDOM.createPortal(modalContent, document.body)}
+      {/* Dropdown for Calendar */}
+      {dropdownContent}
     </div>
   );
 };

@@ -1,12 +1,37 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Menu, Cloud, TrendingUp } from 'lucide-react';
+import { Menu, Cloud, TrendingUp, ChevronDown } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
+import DateRangePicker from './DateRangePicker';
 
 interface HeaderProps {
   onMenuClick: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
+  const {
+    selectedSymbol,
+    setSelectedSymbol,
+    selectedCity,
+    setSelectedCity,
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
+  } = useAppContext();
+
+  const symbols = [
+    { value: 'SPY', label: 'SPY' },
+    { value: '^GSPC', label: '^GSPC' },
+    { value: 'VOO', label: 'VOO' },
+    { value: 'IVV', label: 'IVV' },
+    { value: 'QQQ', label: 'QQQ' },
+  ];
+
+  const cities = [
+    { value: 'NYC', label: 'NYC' },
+  ];
+
   return (
     <motion.header 
       className="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-white/20"
@@ -38,9 +63,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
               <h1 className="text-lg font-semibold text-text-primary">
                 Weather vs Stock
               </h1>
-              <p className="text-xs text-text-secondary">
-                Market Correlator
-              </p>
             </div>
           </div>
 
@@ -72,11 +94,73 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             </a>
           </nav>
 
-          {/* Right side actions */}
-          <div className="flex items-center space-x-4">
-            <button className="btn-primary text-sm">
-              Get Started
-            </button>
+          {/* Global Controls */}
+          <div className="hidden lg:flex items-center space-x-4">
+            {/* Symbol Selector */}
+            <div className="relative">
+              <select
+                value={selectedSymbol}
+                onChange={(e) => setSelectedSymbol(e.target.value)}
+                className="appearance-none bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-2 pr-8 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                {symbols.map((symbol) => (
+                  <option key={symbol.value} value={symbol.value}>
+                    {symbol.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-text-secondary pointer-events-none" />
+            </div>
+
+            {/* Date Range Picker */}
+            <DateRangePicker
+              startDate={startDate}
+              endDate={endDate}
+              onDateRangeChange={(start, end) => {
+                setStartDate(start);
+                setEndDate(end);
+              }}
+            />
+          </div>
+
+          {/* Mobile controls (simplified) */}
+          <div className="lg:hidden flex items-center space-x-2">
+            <div className="text-xs text-text-secondary">
+              {selectedSymbol} • NYC
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Date Range Picker */}
+      <div className="lg:hidden border-t border-white/10 bg-white/5 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <select
+                  value={selectedSymbol}
+                  onChange={(e) => setSelectedSymbol(e.target.value)}
+                  className="appearance-none bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-1.5 pr-6 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  {symbols.map((symbol) => (
+                    <option key={symbol.value} value={symbol.value}>
+                      {symbol.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-1.5 top-1/2 transform -translate-y-1/2 h-3 w-3 text-text-secondary pointer-events-none" />
+              </div>
+            </div>
+
+            <DateRangePicker
+              startDate={startDate}
+              endDate={endDate}
+              onDateRangeChange={(start, end) => {
+                setStartDate(start);
+                setEndDate(end);
+              }}
+            />
           </div>
         </div>
       </div>

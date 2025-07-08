@@ -24,7 +24,7 @@ def get_date_range_for_timeframe(timeframe: str) -> Tuple[datetime, datetime]:
 
 def validate_date_range(start_date: datetime, end_date: datetime) -> bool:
     """Validate that date range is reasonable"""
-    if start_date >= end_date:
+    if start_date > end_date:
         return False
     
     # Check if range is not too large (max 2 years)
