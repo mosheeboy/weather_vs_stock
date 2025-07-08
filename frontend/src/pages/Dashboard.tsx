@@ -8,8 +8,10 @@ import {
   Calendar,
   MapPin
 } from 'lucide-react';
-import { correlationApi, analysisApi } from '../utils/api';
-import { CorrelationResponse, AnalysisSummary } from '../types';
+import { correlationApi, analysisApi, weatherApi, stockApi } from '../utils/api';
+import { CorrelationResponse, AnalysisSummary, WeatherData, StockData } from '../types';
+import CorrelationCharts from '../components/CorrelationCharts';
+import TimeSeriesChart from '../components/TimeSeriesChart';
 
 const Dashboard: React.FC = () => {
   const [selectedSymbol, setSelectedSymbol] = useState('SPY');
@@ -17,6 +19,8 @@ const Dashboard: React.FC = () => {
   const [selectedTimeframe, setSelectedTimeframe] = useState('1m');
   const [correlationData, setCorrelationData] = useState<CorrelationResponse | null>(null);
   const [summaryData, setSummaryData] = useState<AnalysisSummary | null>(null);
+  const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
+  const [stockData, setStockData] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,6 +46,14 @@ const Dashboard: React.FC = () => {
     try {
       console.log('Fetching data for:', selectedSymbol, selectedCity, selectedTimeframe);
       
+      // Calculate date range for 1 month
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setMonth(endDate.getMonth() - 1);
+      
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
+      
       // Fetch correlation analysis
       const correlationResponse = await correlationApi.getAnalysis(
         selectedSymbol, 
@@ -49,6 +61,22 @@ const Dashboard: React.FC = () => {
         selectedTimeframe
       );
       setCorrelationData(correlationResponse);
+      
+      // Fetch weather data
+      const weatherResponse = await weatherApi.getHistoricalData(
+        selectedCity,
+        startDateStr,
+        endDateStr
+      );
+      setWeatherData(weatherResponse.data || []);
+      
+      // Fetch stock data
+      const stockResponse = await stockApi.getHistoricalData(
+        selectedSymbol,
+        startDateStr,
+        endDateStr
+      );
+      setStockData(stockResponse.data || []);
       
       // Fetch summary data
       const summaryResponse = await analysisApi.getSummary();
@@ -259,53 +287,41 @@ const Dashboard: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Main Chart Section */}
-      <motion.div
-        className="card mb-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.6 }}
-      >
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-text-primary">
-            Correlation Analysis
-          </h2>
-          <button className="btn-secondary text-sm">
-            Export Data
-          </button>
-        </div>
-        
-        {/* Placeholder for chart */}
-        <div className="h-96 bg-surface-50 rounded-xl flex items-center justify-center">
-          <div className="text-center">
-            <BarChart3 className="h-12 w-12 text-text-tertiary mx-auto mb-4" />
-            <p className="text-text-secondary">Chart will be displayed here</p>
-            <p className="text-sm text-text-tertiary">
-              Interactive correlation visualization
-            </p>
-          </div>
-        </div>
-      </motion.div>
+      {/* Correlation Charts */}
+      <div className="mb-12">
+        <CorrelationCharts
+          analysis={correlationData?.analysis || null}
+          matrix={correlationData?.matrix || null}
+          loading={loading}
+        />
+      </div>
+
+      {/* Time Series Charts */}
+      <div className="mb-12">
+        <TimeSeriesChart
+          weatherData={weatherData}
+          stockData={stockData}
+          loading={loading}
+        />
+      </div>
 
       {/* Bottom Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Correlation Matrix */}
+      <div className="mb-8">
         <motion.div
-          className="card"
+          className="text-center mb-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.7 }}
         >
-          <h3 className="text-lg font-semibold text-text-primary mb-4">
-            Correlation Matrix
-          </h3>
-          <div className="h-64 bg-surface-50 rounded-xl flex items-center justify-center">
-            <div className="text-center">
-              <BarChart3 className="h-8 w-8 text-text-tertiary mx-auto mb-2" />
-              <p className="text-text-secondary text-sm">Heatmap will be displayed here</p>
-            </div>
-          </div>
+          <h2 className="text-2xl font-bold text-text-primary mb-2">
+            Market Insights
+          </h2>
+          <p className="text-text-secondary">
+            Additional analysis and significant market events
+          </p>
         </motion.div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
         {/* Recent Events */}
         <motion.div
@@ -353,6 +369,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </motion.div>
+        </div>
       </div>
     </div>
   );

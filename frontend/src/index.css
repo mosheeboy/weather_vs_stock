@@ -59,6 +59,44 @@
   .animate-scale-in {
     animation: scaleIn 0.2s ease-out;
   }
+  
+  /* Accent colors for correlation strength */
+  .bg-accent-positive {
+    background-color: #30D158;
+  }
+  
+  .bg-accent-warning {
+    background-color: #FF9500;
+  }
+  
+  .bg-accent-negative {
+    background-color: #FF3B30;
+  }
+  
+  .text-accent-positive {
+    color: #30D158;
+  }
+  
+  .text-accent-warning {
+    color: #FF9500;
+  }
+  
+  .text-accent-negative {
+    color: #FF3B30;
+  }
+  
+  /* Primary colors */
+  .bg-primary-100 {
+    background-color: #E3F2FD;
+  }
+  
+  .bg-primary-500 {
+    background-color: #007AFF;
+  }
+  
+  .text-primary-500 {
+    color: #007AFF;
+  }
 }
 
 /* Custom scrollbar */
